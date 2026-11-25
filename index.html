@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Governance Audit Readiness Scorer</title>
+<meta name="description" content="Tier your finance AI agents by audit risk and plan the controls you need for an AI governance audit in 90 days. Based on EY's 2026 global agentic audit rollout." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F8FAFC; --surface: #FFFFFF; --ink: #0F172A; --muted: #475569; --line: #E2E8F0;
+    --cyan: #0891B2; --cyan-soft: #ECFEFF; --amber: #D97706; --amber-soft: #FFFBEB;
+    --leaf: #059669; --leaf-soft: #ECFDF5; --red: #DC2626; --red-soft: #FEF2F2;
+    --mono: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+    --sans: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0B132B; --surface: #131F3D; --ink: #F8FAFC; --muted: #A5B4CB; --line: #24345C;
+      --cyan-soft: rgba(8,145,178,.16); --amber-soft: rgba(217,119,6,.16); --leaf-soft: rgba(5,150,105,.16); --red-soft: rgba(220,38,38,.16);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  body { min-height: 100vh; }
+  .container { max-width: 1120px; margin: 0 auto; padding: 28px 16px 48px; }
+  header .eyebrow { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: .08em; color: var(--cyan); }
+  header h1 { font-size: clamp(26px, 4.5vw, 38px); font-weight: 900; letter-spacing: -.03em; margin: 6px 0 8px; line-height: 1.1; }
+  header p { color: var(--muted); max-width: 780px; line-height: 1.55; font-size: 15.5px; }
+  .tabs { display: flex; gap: 8px; margin: 24px 0 18px; flex-wrap: wrap; }
+  .tab { font: 700 14px var(--sans); padding: 11px 16px; border-radius: 999px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+  .tab[aria-selected="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 18px; }
+  @media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px; padding: 18px; min-width: 0; }
+  .card h2 { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .hint { font-size: 13px; color: var(--muted); line-height: 1.5; margin-bottom: 12px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: flex; justify-content: space-between; gap: 10px; font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+  .field label output { font-family: var(--mono); color: var(--cyan); white-space: nowrap; }
+  .field .ceil { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  input[type="range"] { width: 100%; accent-color: var(--cyan); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  input[type="number"] { width: 100%; font: 600 14px var(--mono); padding: 9px 10px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+  .sub-l { font-size: 11.5px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 600; }
+  .real { background: var(--amber-soft); border-radius: 12px; padding: 12px; }
+  .real label output { color: var(--amber); }
+  .row-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button.btn { font: 700 13.5px var(--sans); padding: 10px 14px; border-radius: 10px; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+  button.btn.primary { background: var(--cyan); border-color: var(--cyan); color: #fff; }
+  .kpis { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .kpi { border-radius: 12px; padding: 12px 14px; border: 1.5px solid var(--line); }
+  .kpi .lbl { font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .kpi .val { font-family: var(--mono); font-size: 26px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .kpi.h { background: var(--cyan-soft); } .kpi.h .val { color: var(--cyan); }
+  .kpi.d { background: var(--leaf-soft); } .kpi.d .val { color: var(--leaf); }
+  .kpi.f { background: var(--bg); }
+  .kpi.c { background: var(--amber-soft); } .kpi.c .val { color: var(--amber); }
+  .wf { display: grid; grid-template-columns: minmax(0, 1fr) 110px; gap: 6px 12px; align-items: center; margin: 6px 0; font-size: 13.5px; }
+  .wf .name { font-weight: 700; }
+  .wf .hrs { font-family: var(--mono); text-align: right; font-weight: 700; }
+  .wf .bar { grid-column: 1 / -1; height: 10px; border-radius: 999px; background: var(--line); overflow: hidden; position: relative; }
+  .wf .bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .wf .bar .ceilb { background: rgba(8,145,178,.25); }
+  .wf .bar .realb { background: var(--cyan); }
+  
+  .note { font-size: 12.5px; color: var(--muted); line-height: 1.5; margin-top: 12px; padding: 10px 12px; border-left: 4px solid var(--line); background: var(--bg); border-radius: 0 8px 8px 0; }
+  .gate { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .gate h3 { font-size: 15px; font-weight: 800; }
+  .gate p { font-size: 13px; color: var(--muted); margin: 3px 0 10px; line-height: 1.45; }
+  .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .seg button { font: 700 12.5px var(--sans); padding: 9px 6px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; }
+  .seg button.on[data-val="0"] { background: var(--red-soft); border-color: var(--red); color: var(--red); }
+  .seg button.on[data-val="1"] { background: var(--amber-soft); border-color: var(--amber); color: var(--amber); }
+  .seg button.on[data-val="2"] { background: var(--leaf-soft); border-color: var(--leaf); color: var(--leaf); }
+  .dial-wrap { text-align: center; }
+  .dial-pct { font: 700 46px var(--mono); margin-top: -64px; }
+  .band { display: inline-block; margin-top: 8px; font-weight: 800; padding: 8px 14px; border-radius: 999px; font-size: 14px; }
+  .band.b0 { background: var(--red-soft); color: var(--red); } .band.b1 { background: var(--amber-soft); color: var(--amber); } .band.b2 { background: var(--leaf-soft); color: var(--leaf); }
+  .next { text-align: left; margin-top: 16px; font-size: 13.5px; line-height: 1.55; }
+  .next li { margin: 0 0 6px 18px; }
+  .msg { font-size: 12.5px; margin-top: 8px; color: var(--muted); min-height: 18px; }
+  footer { margin-top: 32px; font-size: 12.5px; color: var(--muted); line-height: 1.6; border-top: 1px solid var(--line); padding-top: 14px; }
+  @media print { .tabs, .row-btns { display: none; } .panel { display: block !important; } }
+</style>
+</head>
+<body>
+<style>
+  .agent { border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; }
+  .agent-top { display: flex; gap: 8px; align-items: center; }
+  .agent-top input[type="text"] { flex: 1; min-width: 0; font: 700 14px var(--sans); padding: 8px 10px; border-radius: 8px; border: 1.5px solid var(--line); background: var(--bg); color: var(--ink); }
+  .tier { font: 800 11.5px var(--mono); letter-spacing: .05em; padding: 6px 10px; border-radius: 999px; white-space: nowrap; }
+  .tier.High { background: var(--red-soft); color: var(--red); }
+  .tier.Medium { background: var(--amber-soft); color: var(--amber); }
+  .tier.Low { background: var(--leaf-soft); color: var(--leaf); }
+  .rm { font: 700 16px var(--sans); border: none; background: none; color: var(--muted); cursor: pointer; padding: 4px 8px; }
+  .flags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .flag { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.35; color: var(--muted); cursor: pointer; padding: 6px 8px; border-radius: 8px; border: 1.5px solid var(--line); }
+  .flag input { margin-top: 2px; accent-color: var(--cyan); }
+  .flag.on { color: var(--ink); border-color: var(--cyan); background: var(--cyan-soft); }
+  .counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+  .cnt { border-radius: 12px; padding: 12px; text-align: center; }
+  .cnt b { display: block; font: 700 32px var(--mono); }
+  .cnt span { font: 700 11px var(--mono); letter-spacing: .06em; }
+  .cnt.h { background: var(--red-soft); color: var(--red); }
+  .cnt.m { background: var(--amber-soft); color: var(--amber); }
+  .cnt.l { background: var(--leaf-soft); color: var(--leaf); }
+  .ev { border-left: 4px solid var(--line); padding: 8px 12px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+  .ev b { display: block; font-size: 13.5px; }
+  .ev.h { border-color: var(--red); } .ev.m { border-color: var(--amber); } .ev.l { border-color: var(--leaf); }
+  .plan { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; text-align: left; }
+  @media (max-width: 600px) { .plan, .flags { grid-template-columns: minmax(0, 1fr); } }
+  .phase { background: var(--bg); border: 1.5px solid var(--line); border-radius: 10px; padding: 10px; font-size: 12.5px; }
+  .phase b { display: block; font: 800 11.5px var(--mono); letter-spacing: .05em; color: var(--cyan); margin-bottom: 4px; }
+  .phase ul { list-style: none; line-height: 1.5; }
+</style>
+<div class="container">
+  <header>
+    <div class="eyebrow">COMPANION TOOL • AI IN FINANCE, DONE RIGHT • EY</div>
+    <h1>AI Governance Audit Readiness Scorer</h1>
+    <p>EY's auditors now run certified AI agents across 1.4 trillion journal lines a year, and they're building the frameworks to audit the AI your finance team uses. In a 2026 survey, 78% of U.S. leaders weren't confident they'd pass an AI governance audit within 90 days. Use this page to tier your finance AI by risk and plan the controls you're missing.</p>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" id="tab-btn-1" role="tab" aria-selected="true" data-tab="1">1 · Agent inventory</button>
+    <button class="tab" id="tab-btn-2" role="tab" aria-selected="false" data-tab="2">2 · 90-day readiness</button>
+  </div>
+
+  <section class="panel active" id="panel-1">
+    <div class="grid">
+      <div class="card">
+        <h2>Your finance AI</h2>
+        <div class="hint">List each AI agent or tool your finance team uses and tick what applies. The demo list is made up; rename, remove or add your own.</div>
+        <div id="agents"></div>
+        <div class="row-btns">
+          <button class="btn primary" id="btn-add">Add an agent</button>
+          <button class="btn" id="btn-reset">Reset demo list</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>How auditors are likely to tier them</h2>
+        <div class="hint">Posting or changing records without approval counts double. High = 3+ points, Medium = 2, Low = 0–1.</div>
+        <div class="counts">
+          <div class="cnt h"><b id="cnt-high">0</b><span>HIGH RISK</span></div>
+          <div class="cnt m"><b id="cnt-med">0</b><span>MEDIUM</span></div>
+          <div class="cnt l"><b id="cnt-low">0</b><span>LOW</span></div>
+        </div>
+        <div class="ev h"><b>High: expect full control testing</b>Certification evidence, approval gates on every output, exception logs, drift reports and a human review trail.</div>
+        <div class="ev m"><b>Medium: expect walkthroughs and samples</b>Documented methodology, access permissions and evidence that a person reviews what the agent produces.</div>
+        <div class="ev l"><b>Low: expect an inventory check</b>Keep it on your AI inventory with an owner, and confirm it can't post or change records.</div>
+        <div class="note">Tiers are a planning aid based on the article's governance points, not an auditing standard. Your auditor's risk assessment decides the actual scope.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-2">
+    <div class="grid">
+      <div class="card">
+        <h2>8 controls your auditors will ask about</h2>
+        <div class="hint">Rate each one honestly. Partial counts as half.</div>
+        <div id="gates"></div>
+      </div>
+      <div class="card dial-wrap">
+        <h2>AI governance readiness</h2>
+        <svg viewBox="0 0 240 140" width="100%" style="max-width:320px">
+          <path d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--line)" stroke-width="18" stroke-linecap="round" />
+          <path id="dial-arc" d="M20 120 A100 100 0 0 1 220 120" fill="none" stroke="var(--amber)" stroke-width="18" stroke-linecap="round" pathLength="100" stroke-dasharray="0 100" />
+        </svg>
+        <div class="dial-pct" id="sc-pct">50%</div>
+        <div class="band b1" id="sc-band">Close the gaps in the next 90 days</div>
+        <div class="plan" id="plan"></div>
+        <div class="row-btns" style="justify-content:center">
+          <button class="btn primary" id="btn-copy">Copy readiness memo</button>
+          <button class="btn" id="btn-print">Print / save PDF</button>
+        </div>
+        <div class="msg" id="copy-msg"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Built as a companion to an edition of the LinkedIn newsletter <b>AI in Finance, Done Right</b>, on EY's global agentic audit rollout. The demo list is an example; tiers and scores are planning aids, not EY methodology or an audit opinion. Everything runs in your browser and nothing is uploaded.
+  </footer>
+</div>
+
+<script>
+(function () {
+  const FLAGS = [
+    ['icfr', 'Touches ICFR-relevant accounts', 1],
+    ['post', 'Can post or change records without approval', 2],
+    ['data', 'Uses customer or personal data', 1],
+    ['ext', 'Output used directly in external reporting', 1]
+  ];
+  const DEMO = [
+    { name: 'Revenue recognition review agent', icfr: true, post: false, data: true, ext: true },
+    { name: 'Cash forecasting model', icfr: false, post: false, data: false, ext: false },
+    { name: 'AP invoice coding agent', icfr: true, post: true, data: false, ext: false },
+    { name: 'Close commentary drafting', icfr: true, post: false, data: false, ext: true }
+  ];
+  const CONTROLS = [
+    ['Standardized process before agents', 'The process each agent runs on is documented and the same everywhere.'],
+    ['Narrow permissions per agent', 'Every agent has a defined task and only the data access it needs.'],
+    ['Certification before production', 'Agents are tested and signed off before they touch live work.'],
+    ['Drift monitoring', 'Someone watches agent output over time and reviews it when it shifts.'],
+    ['Approval gates', 'A person approves before agent output is used or posted.'],
+    ['Data isolation', 'Sensitive data stays inside agreed boundaries.'],
+    ['Exception logs', 'Overrides and errors are logged, with how each was resolved.'],
+    ['Human review trail', 'You can show where people challenged the AI, and what changed.']
+  ];
+  const LABELS = ['No', 'Partial', 'Yes'];
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  let agents = [];
+
+  const score = (a) => FLAGS.reduce((s, [k, , w]) => s + (a[k] ? w : 0), 0);
+  const tier = (a) => { const s = score(a); return s >= 3 ? 'High' : s === 2 ? 'Medium' : 'Low'; };
+
+  function renderAgents() {
+    $('agents').innerHTML = agents.map((a, i) => `
+      <div class="agent" data-i="${i}">
+        <div class="agent-top">
+          <input type="text" value="${esc(a.name)}" data-i="${i}" aria-label="Agent name" />
+          <span class="tier ${tier(a)}" id="tier-${i}">${tier(a).toUpperCase()}</span>
+          <button class="rm" data-rm="${i}" aria-label="Remove agent">×</button>
+        </div>
+        <div class="flags">${FLAGS.map(([k, label]) => `
+          <label class="flag ${a[k] ? 'on' : ''}"><input type="checkbox" data-i="${i}" data-k="${k}" ${a[k] ? 'checked' : ''} />${label}</label>`).join('')}
+        </div>
+      </div>`).join('');
+    renderCounts();
+  }
+  function renderCounts() {
+    const c = { High: 0, Medium: 0, Low: 0 };
+    agents.forEach((a, i) => { const t = tier(a); c[t]++; const el = $('tier-' + i); if (el) { el.className = 'tier ' + t; el.textContent = t.toUpperCase(); } });
+    $('cnt-high').textContent = c.High; $('cnt-med').textContent = c.Medium; $('cnt-low').textContent = c.Low;
+    return c;
+  }
+
+  const vals = CONTROLS.map(() => 1);
+  function renderGates() {
+    $('gates').innerHTML = CONTROLS.map(([t, d], i) => `
+      <div class="gate"><h3>${i + 1}. ${t}</h3><p>${d}</p>
+        <div class="seg">${LABELS.map((l, v) => `<button data-idx="${i}" data-val="${v}" class="${vals[i] === v ? 'on' : ''}" aria-pressed="${vals[i] === v}">${l}</button>`).join('')}</div>
+      </div>`).join('');
+  }
+  function scoreReadiness() {
+    const p = Math.round(vals.reduce((s, v) => s + v, 0) / (CONTROLS.length * 2) * 100);
+    $('sc-pct').textContent = p + '%';
+    const arc = $('dial-arc');
+    arc.setAttribute('stroke-dasharray', `${p} 100`);
+    const band = p >= 80 ? 2 : p >= 50 ? 1 : 0;
+    arc.setAttribute('stroke', ['var(--red)', 'var(--amber)', 'var(--leaf)'][band]);
+    const b = $('sc-band');
+    b.className = 'band b' + band;
+    b.textContent = ['Not ready for an AI governance audit', 'Close the gaps in the next 90 days', 'Ready to show your auditors'][band];
+    const gaps = CONTROLS.map((c, i) => [c[0], vals[i], i]).filter(([, v]) => v < 2).sort((a, c) => a[1] - c[1] || a[2] - c[2]);
+    const per = Math.max(1, Math.ceil(gaps.length / 3));
+    const phases = ['DAYS 1–30', 'DAYS 31–60', 'DAYS 61–90'].map((label, k) => [label, gaps.slice(k * per, (k + 1) * per)]);
+    $('plan').innerHTML = gaps.length
+      ? phases.map(([label, g]) => `<div class="phase"><b>${label}</b><ul>${g.length ? g.map(([t, v]) => `<li>${v === 0 ? 'Set up' : 'Finish'}: ${t}</li>`).join('') : '<li>Keep evidence current</li>'}</ul></div>`).join('')
+      : '<div class="phase" style="grid-column:1/-1"><b>ALL 8 IN PLACE</b>Keep the evidence current and walk your auditors through it before fieldwork.</div>';
+    return { p, phases };
+  }
+
+  function memo() {
+    const c = renderCounts();
+    const { p, phases } = scoreReadiness();
+    const lines = ['FINANCE AI GOVERNANCE READINESS MEMO', '',
+      `AI inventory: ${agents.length} agents (${c.High} high, ${c.Medium} medium, ${c.Low} low risk)`,
+      ...agents.map((a) => `- ${a.name || 'Unnamed agent'}: ${tier(a)}`), '',
+      `Readiness: ${p}% (${$('sc-band').textContent})`,
+      ...CONTROLS.map((x, i) => `- ${x[0]}: ${LABELS[vals[i]]}`), '', '90-day plan:',
+      ...phases.map(([label, g]) => `${label}: ${g.length ? g.map(([t]) => t).join('; ') : 'keep evidence current'}`), '',
+      'Planning aid only; your auditor decides the actual scope.'];
+    return lines.join('\n');
+  }
+
+  function selectTab(n) {
+    [1, 2].forEach((k) => {
+      $('tab-btn-' + k).setAttribute('aria-selected', String(k === n));
+      $('panel-' + k).classList.toggle('active', k === n);
+    });
+  }
+  function resetAll() {
+    agents = DEMO.map((a) => ({ ...a }));
+    for (let i = 0; i < vals.length; i++) vals[i] = 1;
+    renderAgents(); renderGates(); scoreReadiness();
+  }
+
+  document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => selectTab(Number(b.dataset.tab))));
+  $('agents').addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.matches('input[type="checkbox"]')) {
+      agents[Number(t.dataset.i)][t.dataset.k] = t.checked;
+      t.closest('.flag').classList.toggle('on', t.checked);
+      renderCounts();
+    }
+  });
+  $('agents').addEventListener('input', (e) => {
+    if (e.target.matches('input[type="text"]')) agents[Number(e.target.dataset.i)].name = e.target.value;
+  });
+  $('agents').addEventListener('click', (e) => {
+    const rm = e.target.closest('[data-rm]');
+    if (rm) { agents.splice(Number(rm.dataset.rm), 1); renderAgents(); }
+  });
+  $('btn-add').addEventListener('click', () => {
+    agents.push({ name: 'New agent', icfr: false, post: false, data: false, ext: false });
+    renderAgents();
+  });
+  $('btn-reset').addEventListener('click', resetAll);
+  $('gates').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-idx]');
+    if (!btn) return;
+    vals[Number(btn.dataset.idx)] = Number(btn.dataset.val);
+    renderGates(); scoreReadiness();
+  });
+  $('btn-copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(memo()); $('copy-msg').textContent = 'Memo copied to clipboard.'; }
+    catch { $('copy-msg').textContent = 'Your browser blocked the clipboard. Use Print / save PDF instead.'; }
+  });
+  $('btn-print').addEventListener('click', () => window.print());
+
+  resetAll();
+})();
+</script>
+</body>
+</html>
